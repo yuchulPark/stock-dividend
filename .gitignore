@@ -44,3 +44,11 @@ application-secrets.properties
 *.log
 .DS_Store
 Thumbs.db
+
+### React frontend ###
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+!frontend/.env.example
