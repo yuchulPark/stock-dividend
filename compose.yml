@@ -1,0 +1,64 @@
+name: stock-dividend
+
+services:
+  stock-db:
+    image: postgres:17
+    container_name: stock-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in the server .env}
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in the server .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the server .env}
+    volumes:
+      - stock-db-data:/var/lib/postgresql/data
+    networks:
+      - stock-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+
+  stock-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stock-backend
+    restart: unless-stopped
+    depends_on:
+      stock-db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://stock-db:5432/${POSTGRES_DB:?Set POSTGRES_DB in the server .env}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:?Set POSTGRES_USER in the server .env}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the server .env}
+      ALPHA_VANTAGE_API_KEY: ${ALPHA_VANTAGE_API_KEY:-}
+      KRX_AUTH_KEY: ${KRX_AUTH_KEY:-}
+      OPENDART_API_KEY: ${OPENDART_API_KEY:-}
+      STOCK_REFRESH_ENABLED: "false"
+    networks:
+      - stock-network
+
+  stock-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: stock-frontend
+    restart: unless-stopped
+    depends_on:
+      stock-backend:
+        condition: service_healthy
+    ports:
+      - "80:80"
+    networks:
+      - stock-network
+
+networks:
+  stock-network:
+    name: stock-network
+    driver: bridge
+
+volumes:
+  stock-db-data:
+    name: stock-db-data

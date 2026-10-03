@@ -256,6 +256,11 @@ Backend를 실행하지 않으면 홈/계산기 입력 UI는 표시되지만 API
 인증키/이용 승인이 없으면 조회 오류 또는 기존 Backend 캐시 fallback이 표시될 수 있습니다.
 `npm run preview`는 빌드 확인용입니다. 배포 설정은 이번 작업 범위가 아닙니다.
 
+## Ubuntu 개발서버 배포
+
+Docker Compose 배포 구성, 서버 환경변수, 최초 실행 및 재배포 명령은
+[Docker 개발서버 배포 문서](../docs/docker-dev-deployment.md)를 참고하세요.
+
 ## 확인한 공식 문서
 
 - [Vite 프로젝트 생성](https://vite.dev/guide/)
