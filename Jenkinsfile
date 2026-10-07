@@ -2,6 +2,7 @@ pipeline {
     agent any
 
     options {
+        skipDefaultCheckout(true)
         disableConcurrentBuilds()
         timestamps()
     }
