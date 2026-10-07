@@ -33,17 +33,35 @@ pipeline {
                       -e POSTGRES_PASSWORD=stock_ci_pw \
                       postgres:17 >/dev/null
 
+                    # PostgreSQL 공식 이미지의 초기화용 임시 서버가 끝날 때까지 기다린다.
+                    for i in $(seq 1 60); do
+                        if docker logs "$CI_DB" 2>&1 | \
+                        grep -q "PostgreSQL init process complete"; then
+                            break
+                        fi
+
+                        sleep 1
+                    done
+
+                    # 초기화 완료 후 실제 PostgreSQL 서버가 연결을 받을 때까지 기다린다.
                     for i in $(seq 1 30); do
                         if docker exec "$CI_DB" \
-                          pg_isready -U stock_ci -d stock_ci >/dev/null 2>&1; then
+                        pg_isready -h 127.0.0.1 \
+                        -U stock_ci \
+                        -d stock_ci >/dev/null 2>&1; then
+
+                            echo "PostgreSQL CI database is ready."
                             break
+                        fi
+
+                        if [ "$i" -eq 30 ]; then
+                            echo "PostgreSQL CI database failed to start."
+                            docker logs "$CI_DB"
+                            exit 1
                         fi
 
                         sleep 2
                     done
-
-                    docker exec "$CI_DB" \
-                      pg_isready -U stock_ci -d stock_ci
 
                     docker run --rm \
                       --network "$CI_NETWORK" \
